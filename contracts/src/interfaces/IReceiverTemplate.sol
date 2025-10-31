@@ -3,28 +3,42 @@ pragma solidity ^0.8.0;
 
 import { IERC165 } from "./IERC165.sol";
 import { IReceiver } from "./IReceiver.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title IReceiverTemplate - Abstract receiver with workflow validation and metadata decoding
-abstract contract IReceiverTemplate is IReceiver {
-  // Immutable expected values
-  address public EXPECTED_AUTHOR;
-  bytes10 public EXPECTED_WORKFLOW_NAME;
+abstract contract IReceiverTemplate is IReceiver, Ownable {
+  // CRE infrastructure
+  address public FORWARDER_ADDRESS;
 
+  // Expected workflow metadata
+  address public EXPECTED_OWNER;
+  bytes10 public EXPECTED_WORKFLOW_NAME;
+  
   // Custom errors
-  error InvalidAuthor(address received, address expected);
+  error InvalidSender(address sender, address expected);
+  error InvalidOwner(address received, address expected);
   error InvalidWorkflowName(bytes10 received, bytes10 expected);
 
-  constructor(address expectedAuthor, bytes10 expectedWorkflowName) {
-    EXPECTED_AUTHOR = expectedAuthor;
+
+  /// @param forwarderAddress The CRE forwarder contract address authorized to submit reports
+  /// @param expectedOwner The expected workflow owner address for validation
+  /// @param expectedWorkflowName The expected workflow name (10 bytes) for validation
+  constructor(address forwarderAddress, address expectedOwner, bytes10 expectedWorkflowName) Ownable(msg.sender) {
+    FORWARDER_ADDRESS = forwarderAddress;
+    EXPECTED_OWNER = expectedOwner;
     EXPECTED_WORKFLOW_NAME = expectedWorkflowName;
   }
 
   /// @inheritdoc IReceiver
   function onReport(bytes calldata metadata, bytes calldata report) external virtual override {
+    if (msg.sender != FORWARDER_ADDRESS) {
+      revert InvalidSender(msg.sender, FORWARDER_ADDRESS);
+    }
+    
     (address workflowOwner, bytes10 workflowName) = _decodeMetadata(metadata);
 
-    if (workflowOwner != EXPECTED_AUTHOR) {
-      revert InvalidAuthor(workflowOwner, EXPECTED_AUTHOR);
+    if (workflowOwner != EXPECTED_OWNER) {
+      revert InvalidOwner(workflowOwner, EXPECTED_OWNER);
     }
     if (workflowName != EXPECTED_WORKFLOW_NAME) {
       revert InvalidWorkflowName(workflowName, EXPECTED_WORKFLOW_NAME);
@@ -62,4 +76,23 @@ abstract contract IReceiverTemplate is IReceiver {
   function supportsInterface(bytes4 interfaceId) public pure virtual override returns (bool) {
     return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
+
+  /// @notice Updates the expected workflow owner address
+  /// @param expectedOwner The new expected workflow owner address
+  function setExpectedOwner(address expectedOwner) external onlyOwner {
+    EXPECTED_OWNER = expectedOwner;
+  }
+
+  /// @notice Updates the expected workflow name
+  /// @param expectedWorkflowName The new expected workflow name (10 bytes)
+  function setExpectedWorkflowName(bytes10 expectedWorkflowName) external onlyOwner {
+    EXPECTED_WORKFLOW_NAME = expectedWorkflowName;
+  }
+
+  /// @notice Updates the forwarder address
+  /// @param forwarderAddress The new forwarder address
+  function setForwarderAddress(address forwarderAddress) external onlyOwner {
+    FORWARDER_ADDRESS = forwarderAddress;
+  }
+
 }

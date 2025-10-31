@@ -6,8 +6,8 @@ This repository demonstrates an end-to-end **automated, AI-powered prediction ma
 
 - [What This Demo Does](#what-this-demo-does)
 - [Repository Structure](#repository-structure)
-  - [1. CRE Workflow Directory](#2-cre-workflow-directory)
-  - [2. Contracts Directory](#1-contracts-directory)
+  - [1. CRE Workflow Directory](#1-cre-workflow-directory)
+  - [2. Contracts Directory](#2-contracts-directory)
   - [3. Frontend Directory](#3-frontend-directory)
 - [How It Works](#how-it-works)
   - [Architecture Overview](#architecture-overview)
@@ -148,11 +148,11 @@ To run this demo, you'll need:
 - [Node.js](https://nodejs.org/en/download) v20+
 - [Bun](https://bun.sh/) (JavaScript runtime and package manager)
 - [Foundry/Forge](https://github.com/foundry-rs/foundry) (`forge`, `cast`, `anvil`)
-- [Chainlink Runtime Environment CLI](https://docs.chain.link/)
+- [Chainlink Runtime Environment CLI](https://github.com/smartcontractkit/cre-cli)
 - [ETH Sepolia funds](https://faucets.chain.link/) for gas
+- [USDC on Sepolia](https://faucet.circle.com/) for market participation
 - [Gemini API Key](https://aistudio.google.com/api-keys)
 - [Firebase Project](./firebase-setup.md) with Firestore enabled
-- [USDC on Sepolia](https://faucet.circle.com/) for market participation
 
 ## Quick Start
 
@@ -328,6 +328,7 @@ Find your contract on [Sepolia Etherscan](https://sepolia.etherscan.io/) to view
 3. **Test with small amounts** - Use testnet tokens only
 4. **Verify AI responses** - Gemini responses may be incorrect or biased
 5. **Monitor gas usage** - Settlement transactions consume gas from your account
+6. **Access Control** - The forwarder address restricts who can settle markets. Only update this address if you're migrating to a new CRE infrastructure
 
 ## Contributing
 

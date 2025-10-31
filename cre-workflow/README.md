@@ -128,10 +128,10 @@ All workflow logic is contained within the `prediction-market-demo/` directory:
 
 - [Node.js](https://nodejs.org/) v20+
 - [Bun](https://bun.sh/) (JavaScript runtime and package manager)
-- [CRE CLI](https://docs.chain.link/chainlink-local) installed and configured
+- [CRE CLI](https://github.com/smartcontractkit/cre-cli) installed and configured
 - [Gemini API Key](https://aistudio.google.com/api-keys)
 - [Firebase Project](../firebase-setup.md) with Firestore enabled
-- Sepolia testnet ETH for gas fees
+- [Sepolia testnet ETH for gas fees](https://faucets.chain.link/)
 
 ### Installation
 

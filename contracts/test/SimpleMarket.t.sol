@@ -29,6 +29,7 @@ contract SimpleMarketTest is Test {
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
     address internal carol = makeAddr("carol");
+    address internal forwarderAddress = address(0x15fC6ae953E024d975e77382eEeC56A9101f9F88);
 
     // Mock USDC uses 6 decimals to match the real token
     uint256 internal constant ONE_USDC = 1e6;
@@ -45,7 +46,7 @@ contract SimpleMarketTest is Test {
     function setUp() public {
         // Deploy a mock ERC20 and the SimpleMarket contract
         token = new MockUSDC(1_000_000 * 1e6);
-        market = new SimpleMarket(address(token));
+        market = new SimpleMarket(forwarderAddress, address(token));
 
         // Fund each participant with 1,000 tokens
         token.transfer(alice, 1_000 * ONE_USDC);
@@ -217,6 +218,7 @@ contract SimpleMarketTest is Test {
         vm.expectEmit();
         emit SettlementResponse(id, SimpleMarket.Status.Settled, SimpleMarket.Outcome.Yes);
 
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Yes, 9_500, "evidence-123"));
 
         SimpleMarket.Market memory m = market.getMarket(id);
@@ -243,6 +245,7 @@ contract SimpleMarketTest is Test {
         vm.expectEmit();
         emit SettlementResponse(id, SimpleMarket.Status.Settled, SimpleMarket.Outcome.No);
 
+        vm.prank(forwarderAddress);
         market.onReport(ignored, report);
 
         SimpleMarket.Market memory m = market.getMarket(id);
@@ -267,6 +270,8 @@ contract SimpleMarketTest is Test {
         // Step 1: Inconclusive → status becomes NeedsManual
         vm.expectEmit();
         emit SettlementResponse(id, SimpleMarket.Status.NeedsManual, SimpleMarket.Outcome.Inconclusive);
+
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Inconclusive, 1_000, "resp-0"));
 
         SimpleMarket.Market memory m1 = market.getMarket(id);
@@ -294,6 +299,7 @@ contract SimpleMarketTest is Test {
      */
     function test_settleMarketManually_reverts_when_invalidOutcome() public {
         uint256 id = _prepareAndRequestSettlement("Manual invalid");
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Inconclusive, 1, "x"));
         vm.expectRevert(SimpleMarket.InvalidOutcome.selector);
         market.settleMarketManually(id, SimpleMarket.Outcome.Inconclusive);
@@ -329,6 +335,7 @@ contract SimpleMarketTest is Test {
 
         vm.warp(block.timestamp + 3 minutes + 1);
         market.requestSettlement(id);
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Yes, 9_000, "ev"));
 
         uint256 aliceBefore = token.balanceOf(alice);
@@ -358,6 +365,7 @@ contract SimpleMarketTest is Test {
 
         vm.warp(block.timestamp + 3 minutes + 1);
         market.requestSettlement(id);
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Yes, 9_000, "ev"));
 
         uint256 aliceBefore = token.balanceOf(alice);
@@ -383,6 +391,7 @@ contract SimpleMarketTest is Test {
 
         vm.warp(block.timestamp + 3 minutes + 1);
         market.requestSettlement(id);
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Yes, 9_000, "ev"));
 
         vm.prank(bob);
@@ -401,6 +410,7 @@ contract SimpleMarketTest is Test {
 
         vm.warp(block.timestamp + 3 minutes + 1);
         market.requestSettlement(id);
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Yes, 9_000, "ev"));
 
         vm.startPrank(alice);
@@ -421,6 +431,7 @@ contract SimpleMarketTest is Test {
 
         vm.warp(block.timestamp + 3 minutes + 1);
         market.requestSettlement(id);
+        vm.prank(forwarderAddress);
         market.onReport("", abi.encode(id, SimpleMarket.Outcome.Yes, 9_000, "ev"));
 
         vm.prank(alice);

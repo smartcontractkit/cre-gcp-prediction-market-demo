@@ -110,8 +110,9 @@ contract SimpleMarket is IReceiverTemplate {
     // ======== CONSTRUCTOR ======
     // ===========================
 
+    /// @param forwarderAddress The CRE forwarder contract address authorized to call onReport().
     /// @param token The address of the ERC-20 token used for market participation.
-    constructor(address token) IReceiverTemplate(address(0), bytes10("dummy")) {
+    constructor(address forwarderAddress, address token) IReceiverTemplate(forwarderAddress, address(0), bytes10("dummy")) {
         paymentToken = IERC20(token);
     }
 
@@ -205,9 +206,13 @@ contract SimpleMarket is IReceiverTemplate {
     }
 
     /// @notice External entry point for oracle reports; forwards to _processReport().
-    /// @dev Skips the validation logic in the base template. Required due to CRE alpha.
+    /// @dev Skips the validation logic in the base template. Required due to CRE beta.
     /// @param report The ABI-encoded oracle report data.
     function onReport(bytes calldata, bytes calldata report) external override {
+        if (msg.sender != FORWARDER_ADDRESS) {
+            revert InvalidSender(msg.sender, FORWARDER_ADDRESS);
+        }
+
         _processReport(report);
     }
 

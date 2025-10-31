@@ -51,6 +51,9 @@ The contract inherits from `IReceiverTemplate`, which provides the interface for
   - `markets`: Mapping of market ID to Market data
   - `predictions`: Nested mapping of market ID → user address → Prediction
   - `paymentToken`: Immutable ERC-20 token address (typically USDC)
+  - `FORWARDER_ADDRESS`: CRE forwarder contract address (inherited from IReceiverTemplate)
+  - `EXPECTED_OWNER`: Expected workflow owner address (inherited from IReceiverTemplate)
+  - `EXPECTED_WORKFLOW_NAME`: Expected workflow name (inherited from IReceiverTemplate)
 
 ### Market Lifecycle
 
@@ -80,6 +83,24 @@ stateDiagram-v2
 - **Confidence Tracking**: Stores AI confidence scores (0-10000 basis points)
 - **Evidence URI**: Records Gemini response IDs for auditing
 - **Manual Override**: Allows operator intervention for inconclusive results
+- **Access Control**: Owner-managed forwarder address and workflow validation
+
+### Access Control & Security
+
+The contract implements multiple layers of access control:
+
+1. **Forwarder Restriction**: Only the configured `FORWARDER_ADDRESS` can call `onReport()` to settle markets
+2. **Owner Controls**: The contract owner (deployer) can update:
+   - `EXPECTED_OWNER`: Expected workflow owner address
+   - `EXPECTED_WORKFLOW_NAME`: Expected workflow name for validation
+   - `FORWARDER_ADDRESS`: CRE forwarder contract address
+3. **Manual Override**: The owner can manually settle inconclusive markets using `settleMarketManually()`
+
+**Access Control Functions (inherited from IReceiverTemplate):**
+- `setExpectedOwner(address)` - Update expected workflow owner
+- `setExpectedWorkflowName(bytes10)` - Update expected workflow name
+- `setForwarderAddress(address)` - Update CRE forwarder address
+- `transferOwnership(address)` - Transfer contract ownership (from OpenZeppelin Ownable)
 
 ## Testing
 
@@ -157,7 +178,7 @@ The `script/` directory contains Forge scripts for end-to-end workflow execution
 
 | Script | Purpose | Key Actions |
 |--------|---------|-------------|
-| `1_DeploySimpleMarket.s.sol` | Deploy contract | Deploys SimpleMarket with configured payment token |
+| `1_DeploySimpleMarket.s.sol` | Deploy contract | Deploys SimpleMarket with CRE forwarder address and payment token |
 | `2_CreateNewMarket.s.sol` | Create market | Calls `newMarket()` with a question |
 | `3_MakePrediction.s.sol` | Place bet | Approves tokens and calls `makePrediction()` |
 | `4_RequestSettlement.s.sol` | Request settlement | Calls `requestSettlement()` (emits event for CRE) |
@@ -180,11 +201,13 @@ Inside of the new `.env` file, set the following values.
 
 You will populate the remaining `.env` variables in the following steps.
 
+**Note:** The CRE forwarder address is hardcoded in the deployment script as `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` for Sepolia testnet. If deploying to a different network or using a different CRE setup, update this address in `script/1_DeploySimpleMarket.s.sol`.
+
 ### Script Execution
 
 #### 1. Deploy SimpleMarket
 
-Deploys a new instance of the SimpleMarket contract.
+Deploys a new instance of the SimpleMarket contract with the CRE forwarder address and payment token.
 
 ```bash
 #Load .env values
@@ -316,6 +339,8 @@ remappings = [
 
 You can interact with deployed contracts using `cast`:
 
+### Query Market Data
+
 ```bash
 # Get market details
 cast call $MARKET "getMarket(uint256)(string,uint256,uint256,uint8,uint8,uint256,string,uint16,uint256[2],uint256[2])" $MARKET_ID --rpc-url $RPC_URL
@@ -325,6 +350,48 @@ cast call $MARKET "getPrediction(uint256)(uint256,uint8,bool)" $MARKET_ID --rpc-
 
 # Get evidence URI
 cast call $MARKET "getUri(uint256)(string)" $MARKET_ID --rpc-url $RPC_URL
+```
+
+### Access Control Functions
+
+#### View Current Settings
+
+```bash
+# Get forwarder address
+cast call $MARKET "FORWARDER_ADDRESS()(address)" --rpc-url $RPC_URL
+
+# Get expected owner
+cast call $MARKET "EXPECTED_OWNER()(address)" --rpc-url $RPC_URL
+
+# Get expected workflow name
+cast call $MARKET "EXPECTED_WORKFLOW_NAME()(bytes10)" --rpc-url $RPC_URL
+
+# Get contract owner
+cast call $MARKET "owner()(address)" --rpc-url $RPC_URL
+```
+
+#### Update Settings (Owner Only)
+
+```bash
+# Update forwarder address
+cast send $MARKET "setForwarderAddress(address)" <NEW_FORWARDER> \
+  --rpc-url $RPC_URL \
+  --private-key $PRIVATE_KEY
+
+# Update expected workflow owner
+cast send $MARKET "setExpectedOwner(address)" <NEW_OWNER> \
+  --rpc-url $RPC_URL \
+  --private-key $PRIVATE_KEY
+
+# Update expected workflow name
+cast send $MARKET "setExpectedWorkflowName(bytes10)" <NEW_NAME> \
+  --rpc-url $RPC_URL \
+  --private-key $PRIVATE_KEY
+
+# Transfer contract ownership
+cast send $MARKET "transferOwnership(address)" <NEW_OWNER> \
+  --rpc-url $RPC_URL \
+  --private-key $PRIVATE_KEY
 ```
 
 ## Additional Resources
