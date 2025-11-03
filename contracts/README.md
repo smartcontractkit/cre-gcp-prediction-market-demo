@@ -39,10 +39,12 @@ The contract inherits from `IReceiverTemplate`, which provides the interface for
 **Key Components:**
 
 - **Enums**:
+
   - `Outcome`: Represents market outcomes (`None`, `No`, `Yes`, `Inconclusive`)
   - `Status`: Represents market lifecycle states (`Open`, `SettlementRequested`, `Settled`, `NeedsManual`)
 
 - **Structs**:
+
   - `Market`: Contains question, timestamps, status, outcome, confidence scores, and pool data
   - `Prediction`: Tracks individual user predictions (amount, outcome, claimed status)
 
@@ -90,11 +92,13 @@ Located at `test/SimpleMarket.t.sol`, the test suite uses Foundry's testing fram
 The test suite covers:
 
 **Market Creation:**
+
 - ✅ Correct field initialization
 - ✅ Sequential market ID assignment
 - ✅ Timestamp validation
 
 **Predictions:**
+
 - ✅ Token transfers and approval
 - ✅ Per-side totals and counts
 - ✅ Duplicate prediction prevention
@@ -102,24 +106,28 @@ The test suite covers:
 - ✅ Market timing enforcement
 
 **Settlement Requests:**
+
 - ✅ Event emission
 - ✅ Status transitions
 - ✅ Timing constraints
 - ✅ Duplicate request prevention
 
 **Settlement Execution:**
+
 - ✅ CRE report processing via `onReport()`
 - ✅ Outcome and confidence recording
 - ✅ Evidence URI storage
 - ✅ Status transitions (Settled vs NeedsManual)
 
 **Manual Settlement:**
+
 - ✅ Inconclusive outcome handling
 - ✅ Manual finalization flow
 - ✅ Invalid outcome rejection
 - ✅ Status gating
 
 **Claims & Payouts:**
+
 - ✅ Single winner scenarios
 - ✅ Proportional split calculations
 - ✅ Incorrect prediction rejection
@@ -155,14 +163,14 @@ The `script/` directory contains Forge scripts for end-to-end workflow execution
 
 ### Script Overview
 
-| Script | Purpose | Key Actions |
-|--------|---------|-------------|
-| `1_DeploySimpleMarket.s.sol` | Deploy contract | Deploys SimpleMarket with configured payment token |
-| `2_CreateNewMarket.s.sol` | Create market | Calls `newMarket()` with a question |
-| `3_MakePrediction.s.sol` | Place bet | Approves tokens and calls `makePrediction()` |
-| `4_RequestSettlement.s.sol` | Request settlement | Calls `requestSettlement()` (emits event for CRE) |
-| `5_ClaimPrediction.s.sol` | Claim winnings | Calls `claimPrediction()` for winners |
-| `SettleMarketManually.s.sol` | Manual override | Calls `settleMarketManually()` if needed |
+| Script                       | Purpose            | Key Actions                                        |
+| ---------------------------- | ------------------ | -------------------------------------------------- |
+| `1_DeploySimpleMarket.s.sol` | Deploy contract    | Deploys SimpleMarket with configured payment token |
+| `2_CreateNewMarket.s.sol`    | Create market      | Calls `newMarket()` with a question                |
+| `3_MakePrediction.s.sol`     | Place bet          | Approves tokens and calls `makePrediction()`       |
+| `4_RequestSettlement.s.sol`  | Request settlement | Calls `requestSettlement()` (emits event for CRE)  |
+| `5_ClaimPrediction.s.sol`    | Claim winnings     | Calls `claimPrediction()` for winners              |
+| `SettleMarketManually.s.sol` | Manual override    | Calls `settleMarketManually()` if needed           |
 
 ### Environment Setup
 
@@ -219,6 +227,8 @@ forge script script/2_CreateNewMarket.s.sol \
 
 Place a bet on the market. Set `OUTCOME` (1=No, 2=Yes) and `AMOUNT` in `.env` first.
 
+**NOTE:** This script includes the requirement of approving the Prediction Market Contract to spend USDC from your wallet account.
+
 ```bash
 forge script script/3_MakePrediction.s.sol \
   --rpc-url $RPC_URL \
@@ -227,6 +237,7 @@ forge script script/3_MakePrediction.s.sol \
 ```
 
 **Prerequisites**:
+
 - Your account must have sufficient USDC balance
 - Execute within 3 minutes of market creation (Market close is set to 3 minutes by default in `src/SimpleMarket.sol`)
 - Set `OUTCOME` and `AMOUNT` in `.env`
@@ -249,6 +260,7 @@ forge script script/4_RequestSettlement.s.sol \
 #### 5. CRE Settlement
 
 At this point, the CRE workflow (in `cre-workflow/`) will:
+
 1. Detect the `SettlementRequested` event
 2. Query Gemini AI for the outcome
 3. Submit a signed settlement report via `onReport()`
@@ -267,6 +279,7 @@ forge script script/5_ClaimPrediction.s.sol \
 ```
 
 **Prerequisites**:
+
 - Market must be settled (status = `Settled`)
 - Your prediction must match the winning outcome
 
@@ -334,4 +347,3 @@ cast call $MARKET "getUri(uint256)(string)" $MARKET_ID --rpc-url $RPC_URL
 - [Chainlink CRE Documentation](https://docs.chain.link/)
 - [Sepolia Faucets](https://faucets.chain.link/)
 - [USDC Testnet Faucet](https://faucet.circle.com/)
-
