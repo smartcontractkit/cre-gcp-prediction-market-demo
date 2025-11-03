@@ -40,6 +40,7 @@ The contract inherits from `IReceiverTemplate`, which provides the interface for
 
 - **Enums**:
 
+
   - `Outcome`: Represents market outcomes (`None`, `No`, `Yes`, `Inconclusive`)
   - `Status`: Represents market lifecycle states (`Open`, `SettlementRequested`, `Settled`, `NeedsManual`)
 
@@ -238,7 +239,7 @@ forge script script/3_MakePrediction.s.sol \
 
 **Prerequisites**:
 
-- Your account must have sufficient USDC balance
+- Your account must have sufficient USDC balance. This script also approves `SimpleMarket` to spend your USDC when making your prediction.
 - Execute within 3 minutes of market creation (Market close is set to 3 minutes by default in `src/SimpleMarket.sol`)
 - Set `OUTCOME` and `AMOUNT` in `.env`
 
