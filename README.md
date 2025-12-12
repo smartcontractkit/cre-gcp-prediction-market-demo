@@ -231,7 +231,7 @@ Note down the new contract address and export it:
 export MARKET_ADDRESS=...
 ```
 
-> ![WARNING]
+> [!WARNING]
 > The provided [`ReceiverTemplate.sol`](./contracts/src/interfaces/ReceiverTemplate.sol) includes setter functions to enable access control of the `onReport` function which are not used in this end to end test. In a production environment, it is important to restrict access so that only the CRE forwarder may deliver reports to your contract by calling the `setForwarderAddress` function following deployment. See [the CRE docs](https://docs.chain.link/cre/guides/workflow/using-evm-client/onchain-write/building-consumer-contracts#34-configuring-permissions) for best practices.
 
 
