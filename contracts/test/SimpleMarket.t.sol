@@ -46,7 +46,8 @@ contract SimpleMarketTest is Test {
     function setUp() public {
         // Deploy a mock ERC20 and the SimpleMarket contract
         token = new MockUSDC(1_000_000 * 1e6);
-        market = new SimpleMarket(forwarderAddress, address(token));
+        market = new SimpleMarket(address(token));
+        market.setForwarderAddress(forwarderAddress);
 
         // Fund each participant with 1,000 tokens
         token.transfer(alice, 1_000 * ONE_USDC);

@@ -62,7 +62,7 @@ Located at `src/SimpleMarket.sol`, this contract implements a minimal binary pre
 
 ### Architecture
 
-The contract inherits from `IReceiverTemplate`, which provides the interface for receiving signed settlement reports from CRE workflows.
+The contract inherits from `ReceiverTemplate`, which provides the interface for receiving signed settlement reports from CRE workflows.
 
 **Key Components:**
 
@@ -81,9 +81,6 @@ The contract inherits from `IReceiverTemplate`, which provides the interface for
   - `markets`: Mapping of market ID to Market data
   - `predictions`: Nested mapping of market ID → user address → Prediction
   - `paymentToken`: Immutable ERC-20 token address (typically USDC)
-  - `FORWARDER_ADDRESS`: CRE forwarder contract address (inherited from IReceiverTemplate)
-  - `EXPECTED_OWNER`: Expected workflow owner address (inherited from IReceiverTemplate)
-  - `EXPECTED_WORKFLOW_NAME`: Expected workflow name (inherited from IReceiverTemplate)
 
 ### Market Lifecycle
 
@@ -119,16 +116,18 @@ stateDiagram-v2
 
 The contract implements multiple layers of access control:
 
-1. **Forwarder Restriction**: Only the configured `FORWARDER_ADDRESS` can call `onReport()` to settle markets
+1. **Forwarder Restriction**: Only the configured `s_forwarderAddress` can call `onReport()` to settle markets
 2. **Owner Controls**: The contract owner (deployer) can update:
-   - `EXPECTED_OWNER`: Expected workflow owner address
-   - `EXPECTED_WORKFLOW_NAME`: Expected workflow name for validation
-   - `FORWARDER_ADDRESS`: CRE forwarder contract address
+   - `s_expectedAuthor`: Expected workflow owner author for validation
+   - `s_expectedWorkflowName`: Expected workflow name for validation
+   - `s_expectedWorkflowId` : Expected workflow ID for validation 
+   - `s_forwardedAddress` : Expected forwarded address for validation
 3. **Manual Override**: The owner can manually settle inconclusive markets using `settleMarketManually()`
 
-**Access Control Functions (inherited from IReceiverTemplate):**
-- `setExpectedOwner(address)` - Update expected workflow owner
-- `setExpectedWorkflowName(bytes10)` - Update expected workflow name
+**Access Control Functions (inherited from ReceiverTemplate):**
+- `setExpectedAuthor(address)` - Update expected workflow author
+- `setExpectedWorkflowName(string)` - Update expected workflow name
+- `setExpectedWorkflowId(bytes32)` - Update expected workflow ID
 - `setForwarderAddress(address)` - Update CRE forwarder address
 - `transferOwnership(address)` - Transfer contract ownership (from OpenZeppelin Ownable)
 
@@ -237,13 +236,13 @@ Inside of the new `.env` file, set the following values.
 
 You will populate the remaining `.env` variables in the following steps.
 
-**Note:** The CRE forwarder address is hardcoded in the deployment script as `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` for Sepolia testnet. If deploying to a different network or using a different CRE setup, update this address in `script/1_DeploySimpleMarket.s.sol`.
+**Note:** The CRE forwarder address can be set by calling the `setForwarderAddress` function with  the address `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` for Sepolia testnet.
 
 ### Script Execution
 
 #### 1. Deploy SimpleMarket
 
-Deploys a new instance of the SimpleMarket contract with the CRE forwarder address and payment token.
+Deploys a new instance of the SimpleMarket contract with the payment token.
 
 ```bash
 #Load .env values

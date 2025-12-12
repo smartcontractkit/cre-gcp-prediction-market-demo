@@ -15,7 +15,8 @@ contract DeploySimpleMarket is Script {
         uint256 pk = vm.envUint("PRIVATE_KEY"); // deployer EOA
 
         vm.startBroadcast(pk);
-        market = new SimpleMarket(forwarder, token);
+        market = new SimpleMarket(token);
+        market.setForwarderAddress(forwarder);
         vm.stopBroadcast();
 
         console2.log("SimpleMarket deployed at:", address(market));
