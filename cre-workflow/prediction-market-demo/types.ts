@@ -19,7 +19,7 @@ const evmConfigSchema = z.object({
   gasLimit: z
     .string()
     .regex(/^\d+$/, "gasLimit must be a numeric string")
-    .refine((val) => Number(val) > 0, { message: "gasLimit must be greater than 0" }),
+    .refine(val => Number(val) > 0, { message: "gasLimit must be greater than 0" }),
 });
 
 /**
@@ -44,9 +44,9 @@ export type Config = z.infer<typeof configSchema>;
  */
 export type GeminiResponse = {
   statusCode: number;
-  geminiResponse: string;      // Parsed JSON string from Gemini
-  responseId: string;           // Unique identifier for this request
-  rawJsonString: string;        // Full raw response body
+  geminiResponse: string; // Parsed JSON string from Gemini
+  responseId: string; // Unique identifier for this request
+  rawJsonString: string; // Full raw response body
 };
 
 /**
@@ -109,6 +109,9 @@ export interface FirestoreWriteData {
     statusCode: {
       integerValue: number | string;
     };
+    question: {
+      stringValue: string;
+    };
     geminiResponse: {
       stringValue: string;
     };
@@ -132,13 +135,13 @@ export interface FirestoreWriteData {
  * Contains document metadata and echoes back the written fields.
  */
 export interface FirestoreWriteResponse {
-  name: string;                 // Full document path
+  name: string; // Full document path
   fields: {
     responseId: {
       stringValue: string;
     };
     statusCode: {
-      integerValue: string;     // Firestore stores numbers as strings
+      integerValue: string; // Firestore stores numbers as strings
     };
     rawJsonString: {
       stringValue: string;
@@ -147,8 +150,8 @@ export interface FirestoreWriteResponse {
       stringValue: string;
     };
   };
-  createTime: string;           // ISO 8601 timestamp
-  updateTime: string;           // ISO 8601 timestamp
+  createTime: string; // ISO 8601 timestamp
+  updateTime: string; // ISO 8601 timestamp
 }
 
 /*********************************
@@ -161,8 +164,8 @@ export interface FirestoreWriteResponse {
  */
 export interface SignupNewUserResponse {
   kind: string;
-  idToken: string;              // JWT token for Firestore authentication
+  idToken: string; // JWT token for Firestore authentication
   refreshToken: string;
-  expiresIn: string;            // Token expiration time in seconds
-  localId: string;              // Anonymous user ID
+  expiresIn: string; // Token expiration time in seconds
+  localId: string; // Anonymous user ID
 }

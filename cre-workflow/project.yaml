@@ -18,7 +18,7 @@
 local-simulation:
   rpcs:
     - chain-name: ethereum-testnet-sepolia
-      url: <select your own rpc url>
+      url: https://0xrpc.io/sep
 
 # ==========================================================================
 staging:

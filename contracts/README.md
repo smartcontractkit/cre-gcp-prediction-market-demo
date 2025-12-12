@@ -5,6 +5,7 @@ This directory contains a Foundry project implementing a binary prediction marke
 ## Table of Contents
 
 - [Overview](#overview)
+- [Dependencies](#dependencies)
 - [SimpleMarket.sol Contract](#simplemarketsol-contract)
   - [Architecture](#architecture)
   - [Market Lifecycle](#market-lifecycle)
@@ -12,11 +13,10 @@ This directory contains a Foundry project implementing a binary prediction marke
 - [Testing](#testing)
   - [Test Coverage](#test-coverage)
   - [Running Tests](#running-tests)
-- [Deployment Scripts](#deployment-scripts)
+- [Scripts](#scripts)
   - [Script Overview](#script-overview)
-  - [Environment Setup](#environment-setup)
+  - [Script Setup](#script-setup)
   - [Script Execution](#script-execution)
-- [Dependencies](#dependencies)
 
 ## Overview
 
@@ -27,6 +27,34 @@ The contracts directory is a standard Foundry project containing:
 - **Scripts**: Forge scripts for end-to-end deployment and interaction
 - **Interfaces**: Supporting interfaces for CRE receiver pattern
 - **Mock Contracts**: Mock ERC-20 token (USDC) for testing
+
+## Dependencies
+
+The project uses the following dependencies:
+
+- **Foundry/Forge**: Smart contract development framework
+- **OpenZeppelin Contracts**: `ERC20`, `SafeERC20` for token operations
+- **Forge Standard Library**: Testing utilities and console logging
+
+### Installing Dependencies
+
+```bash
+# Install forge dependencies
+forge install
+
+# Update dependencies
+forge update
+```
+
+### Dependency Remappings
+
+Configured in `foundry.toml`:
+
+```toml
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/"
+]
+```
 
 ## SimpleMarket.sol Contract
 
@@ -39,10 +67,12 @@ The contract inherits from `IReceiverTemplate`, which provides the interface for
 **Key Components:**
 
 - **Enums**:
+
   - `Outcome`: Represents market outcomes (`None`, `No`, `Yes`, `Inconclusive`)
   - `Status`: Represents market lifecycle states (`Open`, `SettlementRequested`, `Settled`, `NeedsManual`)
 
 - **Structs**:
+
   - `Market`: Contains question, timestamps, status, outcome, confidence scores, and pool data
   - `Prediction`: Tracks individual user predictions (amount, outcome, claimed status)
 
@@ -111,11 +141,13 @@ Located at `test/SimpleMarket.t.sol`, the test suite uses Foundry's testing fram
 The test suite covers:
 
 **Market Creation:**
+
 - ✅ Correct field initialization
 - ✅ Sequential market ID assignment
 - ✅ Timestamp validation
 
 **Predictions:**
+
 - ✅ Token transfers and approval
 - ✅ Per-side totals and counts
 - ✅ Duplicate prediction prevention
@@ -123,24 +155,28 @@ The test suite covers:
 - ✅ Market timing enforcement
 
 **Settlement Requests:**
+
 - ✅ Event emission
 - ✅ Status transitions
 - ✅ Timing constraints
 - ✅ Duplicate request prevention
 
 **Settlement Execution:**
+
 - ✅ CRE report processing via `onReport()`
 - ✅ Outcome and confidence recording
 - ✅ Evidence URI storage
 - ✅ Status transitions (Settled vs NeedsManual)
 
 **Manual Settlement:**
+
 - ✅ Inconclusive outcome handling
 - ✅ Manual finalization flow
 - ✅ Invalid outcome rejection
 - ✅ Status gating
 
 **Claims & Payouts:**
+
 - ✅ Single winner scenarios
 - ✅ Proportional split calculations
 - ✅ Incorrect prediction rejection
@@ -170,22 +206,22 @@ forge test --gas-report
 forge coverage
 ```
 
-## Deployment Scripts
+## Scripts
 
-The `script/` directory contains Forge scripts for end-to-end workflow execution on live networks.
+The `script/` directory contains Forge scripts for additional execution options. For a complete end to end walkthrough, see the [quick start](../README.md#quick-start).
 
 ### Script Overview
 
-| Script | Purpose | Key Actions |
-|--------|---------|-------------|
-| `1_DeploySimpleMarket.s.sol` | Deploy contract | Deploys SimpleMarket with CRE forwarder address and payment token |
-| `2_CreateNewMarket.s.sol` | Create market | Calls `newMarket()` with a question |
-| `3_MakePrediction.s.sol` | Place bet | Approves tokens and calls `makePrediction()` |
-| `4_RequestSettlement.s.sol` | Request settlement | Calls `requestSettlement()` (emits event for CRE) |
-| `5_ClaimPrediction.s.sol` | Claim winnings | Calls `claimPrediction()` for winners |
-| `SettleMarketManually.s.sol` | Manual override | Calls `settleMarketManually()` if needed |
+| Script                       | Purpose            | Key Actions                                        |
+| ---------------------------- | ------------------ | -------------------------------------------------- |
+| `1_DeploySimpleMarket.s.sol` | Deploy contract    | Deploys SimpleMarket with configured payment token |
+| `2_CreateNewMarket.s.sol`    | Create market      | Calls `newMarket()` with a question                |
+| `3_MakePrediction.s.sol`     | Place bet          | Approves tokens and calls `makePrediction()`       |
+| `4_RequestSettlement.s.sol`  | Request settlement | Calls `requestSettlement()` (emits event for CRE)  |
+| `5_ClaimPrediction.s.sol`    | Claim winnings     | Calls `claimPrediction()` for winners              |
+| `SettleMarketManually.s.sol` | Manual override    | Calls `settleMarketManually()` if needed           |
 
-### Environment Setup
+### Script Setup
 
 Create a `.env` file in the `contracts/` directory:
 
@@ -250,7 +286,8 @@ forge script script/3_MakePrediction.s.sol \
 ```
 
 **Prerequisites**:
-- Your account must have sufficient USDC balance
+
+- Your account must have sufficient USDC balance. This script also approves `SimpleMarket` to spend your USDC when making your prediction.
 - Execute within 3 minutes of market creation (Market close is set to 3 minutes by default in `src/SimpleMarket.sol`)
 - Set `OUTCOME` and `AMOUNT` in `.env`
 
@@ -272,11 +309,12 @@ forge script script/4_RequestSettlement.s.sol \
 #### 5. CRE Settlement
 
 At this point, the CRE workflow (in `cre-workflow/`) will:
+
 1. Detect the `SettlementRequested` event
 2. Query Gemini AI for the outcome
 3. Submit a signed settlement report via `onReport()`
 
-See the [`cre-workflow README`](../cre-workflow/README.md) for details on running the CRE workflow. Note down the contract address of your deployed market and the transaction hash associated with the SettlementRequested event emitted by step 4. Use these values when configuring your `cre-workflow`.
+See the [quickstart section](../README.md#quick-start) for details on running the CRE workflow. Note down the contract address of your deployed market and the transaction hash associated with the SettlementRequested event emitted by step 4. Use these values when configuring your `cre-workflow`.
 
 #### 6. Claim Prediction
 
@@ -290,12 +328,13 @@ forge script script/5_ClaimPrediction.s.sol \
 ```
 
 **Prerequisites**:
+
 - Market must be settled (status = `Settled`)
 - Your prediction must match the winning outcome
 
 #### 7. Manual Settlement (Optional)
 
-If the AI returns `INCONCLUSIVE`, use this script to manually settle.
+If the LLM returns `INCONCLUSIVE`, use this script to manually settle.
 
 ```bash
 # Set OUTCOME in .env first
@@ -306,34 +345,6 @@ forge script script/SettleMarketManually.s.sol \
 ```
 
 **Prerequisites**: Market status must be `NeedsManual`.
-
-## Dependencies
-
-The project uses the following dependencies:
-
-- **Foundry/Forge**: Smart contract development framework
-- **OpenZeppelin Contracts**: `ERC20`, `SafeERC20` for token operations
-- **Forge Standard Library**: Testing utilities and console logging
-
-### Installing Dependencies
-
-```bash
-# Install forge dependencies
-forge install
-
-# Update dependencies
-forge update
-```
-
-### Dependency Remappings
-
-Configured in `foundry.toml`:
-
-```toml
-remappings = [
-    "@openzeppelin/=lib/openzeppelin-contracts/"
-]
-```
 
 ## Interacting with Deployed Contracts
 
@@ -351,54 +362,3 @@ cast call $MARKET "getPrediction(uint256)(uint256,uint8,bool)" $MARKET_ID --rpc-
 # Get evidence URI
 cast call $MARKET "getUri(uint256)(string)" $MARKET_ID --rpc-url $RPC_URL
 ```
-
-### Access Control Functions
-
-#### View Current Settings
-
-```bash
-# Get forwarder address
-cast call $MARKET "FORWARDER_ADDRESS()(address)" --rpc-url $RPC_URL
-
-# Get expected owner
-cast call $MARKET "EXPECTED_OWNER()(address)" --rpc-url $RPC_URL
-
-# Get expected workflow name
-cast call $MARKET "EXPECTED_WORKFLOW_NAME()(bytes10)" --rpc-url $RPC_URL
-
-# Get contract owner
-cast call $MARKET "owner()(address)" --rpc-url $RPC_URL
-```
-
-#### Update Settings (Owner Only)
-
-```bash
-# Update forwarder address
-cast send $MARKET "setForwarderAddress(address)" <NEW_FORWARDER> \
-  --rpc-url $RPC_URL \
-  --private-key $PRIVATE_KEY
-
-# Update expected workflow owner
-cast send $MARKET "setExpectedOwner(address)" <NEW_OWNER> \
-  --rpc-url $RPC_URL \
-  --private-key $PRIVATE_KEY
-
-# Update expected workflow name
-cast send $MARKET "setExpectedWorkflowName(bytes10)" <NEW_NAME> \
-  --rpc-url $RPC_URL \
-  --private-key $PRIVATE_KEY
-
-# Transfer contract ownership
-cast send $MARKET "transferOwnership(address)" <NEW_OWNER> \
-  --rpc-url $RPC_URL \
-  --private-key $PRIVATE_KEY
-```
-
-## Additional Resources
-
-- [Foundry Documentation](https://book.getfoundry.sh/)
-- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts)
-- [Chainlink CRE Documentation](https://docs.chain.link/)
-- [Sepolia Faucets](https://faucets.chain.link/)
-- [USDC Testnet Faucet](https://faucet.circle.com/)
-

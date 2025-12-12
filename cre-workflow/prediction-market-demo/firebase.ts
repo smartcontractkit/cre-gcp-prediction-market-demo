@@ -2,14 +2,14 @@
 // Firebase/Firestore integration for storing settlement results.
 // Uses CRE HTTP capability to interact with Firebase REST APIs.
 
-import { 
-  cre, 
-  ok, 
-  type Runtime, 
-  type HTTPSendRequester, 
-  consensusIdenticalAggregation 
-} from "@chainlink/cre-sdk";
-import type { Config, FirestoreWriteData, FirestoreWriteResponse, SignupNewUserResponse, GeminiResponse } from "./types";
+import { cre, ok, type Runtime, type HTTPSendRequester, consensusIdenticalAggregation } from "@chainlink/cre-sdk";
+import type {
+  Config,
+  FirestoreWriteData,
+  FirestoreWriteResponse,
+  SignupNewUserResponse,
+  GeminiResponse,
+} from "./types";
 
 /*********************************
  * Firebase/Firestore Integration
@@ -18,13 +18,18 @@ import type { Config, FirestoreWriteData, FirestoreWriteResponse, SignupNewUserR
 /**
  * Writes settlement data to Firestore for audit trail and frontend display.
  * Authenticates with Firebase using anonymous sign-in, then writes the document.
- * 
+ *
  * @param runtime - CRE runtime instance with config and secrets
  * @param response - Gemini API response containing settlement result
  * @param txHash - Transaction hash of the on-chain settlement
  * @returns Firestore write response with document metadata
  */
-export function writeToFirestore(runtime: Runtime<Config>, response: GeminiResponse, txHash: string): FirestoreWriteResponse {
+export function writeToFirestore(
+  runtime: Runtime<Config>,
+  question: string,
+  response: GeminiResponse,
+  txHash: string
+): FirestoreWriteResponse {
   const firestoreApiKey = runtime.getSecret({ id: "FIREBASE_API_KEY" }).result();
   const firestoreProjectId = runtime.getSecret({ id: "FIREBASE_PROJECT_ID" }).result();
 
@@ -43,7 +48,7 @@ export function writeToFirestore(runtime: Runtime<Config>, response: GeminiRespo
   const writeResult: FirestoreWriteResponse = httpClient
     .sendRequest(
       runtime,
-      postFirestoreWrite(tokenResult.idToken, firestoreProjectId.value, response, txHash),
+      postFirestoreWrite(tokenResult.idToken, firestoreProjectId.value, question, response, txHash),
       consensusIdenticalAggregation<FirestoreWriteResponse>()
     )(runtime.config)
     .result();
@@ -54,7 +59,7 @@ export function writeToFirestore(runtime: Runtime<Config>, response: GeminiRespo
 /**
  * Obtains a Firebase ID token using anonymous authentication.
  * This token is required for Firestore API requests.
- * 
+ *
  * @param firebaseApiKey - Firebase Web API key
  * @returns Function that performs the HTTP request and returns the auth response
  */
@@ -93,7 +98,7 @@ const postFirebaseIdToken =
 /**
  * Writes a document to Firestore with settlement data.
  * Uses the Gemini response ID as the document ID for idempotency.
- * 
+ *
  * @param idToken - Firebase authentication token
  * @param projectId - Firebase project ID
  * @param response - Gemini API response to store
@@ -101,11 +106,12 @@ const postFirebaseIdToken =
  * @returns Function that performs the HTTP request and returns the Firestore response
  */
 const postFirestoreWrite =
-  (idToken: string, projectId: string, response: GeminiResponse, txHash: string) =>
+  (idToken: string, projectId: string, question: string, response: GeminiResponse, txHash: string) =>
   (sendRequester: HTTPSendRequester, config: Config): FirestoreWriteResponse => {
     const dataToSend: FirestoreWriteData = {
       fields: {
         statusCode: { integerValue: response.statusCode },
+        question: { stringValue: question },
         geminiResponse: { stringValue: response.geminiResponse },
         responseId: { stringValue: response.responseId },
         rawJsonString: { stringValue: response.rawJsonString },

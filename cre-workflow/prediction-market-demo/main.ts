@@ -2,20 +2,13 @@
 // Entry point for the CRE prediction market settlement workflow.
 // Registers an EVM log trigger and orchestrates the full settlement flow.
 
-import {
-  cre,
-  type Runtime,
-  Runner,
-  getNetwork,
-  bytesToHex,
-  EVMLog,
-} from "@chainlink/cre-sdk";
+import { cre, type Runtime, Runner, getNetwork, bytesToHex, EVMLog } from "@chainlink/cre-sdk";
 import { keccak256, toHex, decodeEventLog, parseAbi } from "viem";
 import { configSchema, type Config, type FirestoreWriteResponse, type GeminiResponse } from "./types";
 // Import Gemini, Firestore, and EVM settlement helpers
 import { askGemini } from "./gemini";
 import { writeToFirestore } from "./firebase";
-import {settleMarket} from "./evm";
+import { settleMarket } from "./evm";
 
 /** ABI for the SettlementRequested event CRE listens for. */
 const eventAbi = parseAbi(["event SettlementRequested(uint256 indexed marketId, string question)"]);
@@ -28,14 +21,13 @@ const eventSignature = "SettlementRequested(uint256,string)";
 /**
  * Handles SettlementRequested events from the SimpleMarket contract.
  * Orchestrates the full settlement flow: Gemini AI query → on-chain settlement → Firestore audit.
- * 
+ *
  * @param runtime - CRE runtime instance with config and secrets
  * @param log - EVM log containing the SettlementRequested event
  * @returns Success message string
  */
 const onLogTrigger = (runtime: Runtime<Config>, log: EVMLog): string => {
   try {
-
     // ========================================
     // Step 1: Decode Event Log
     // ========================================
@@ -79,11 +71,10 @@ const onLogTrigger = (runtime: Runtime<Config>, log: EVMLog): string => {
     // Writes settlement data to Firestore for audit trail and frontend display.
     // See firebase.ts for implementation details.
 
-    const firestoreResult: FirestoreWriteResponse = writeToFirestore(runtime, result, txHash);
+    const firestoreResult: FirestoreWriteResponse = writeToFirestore(runtime, question, result, txHash);
     runtime.log(`Firestore Document: ${firestoreResult.name}`);
 
     return "Settlement Request Processed";
-
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     runtime.log(`onLogTrigger error: ${msg}`);
@@ -98,19 +89,18 @@ const onLogTrigger = (runtime: Runtime<Config>, log: EVMLog): string => {
 /**
  * Initializes the CRE workflow by setting up the EVM log trigger.
  * Configures the workflow to listen for SettlementRequested events from the specified market contract.
- * 
+ *
  * @param config - Validated workflow configuration
  * @returns Array of CRE handlers
  */
 const initWorkflow = (config: Config) => {
-
   // Fetch the chain network to listen for logs on
   const network = getNetwork({
     chainFamily: "evm",
     chainSelectorName: config.evms[0].chainSelectorName,
     isTestnet: true,
   });
-  
+
   if (!network) {
     throw new Error(`Network not found for chain selector name: ${config.evms[0].chainSelectorName}`);
   }
@@ -142,7 +132,7 @@ const initWorkflow = (config: Config) => {
  * Initializes the CRE runner and starts the workflow.
  */
 export async function main() {
-  const runner = await Runner.newRunner<Config>({configSchema});
+  const runner = await Runner.newRunner<Config>({ configSchema });
   await runner.run(initWorkflow);
 }
 
