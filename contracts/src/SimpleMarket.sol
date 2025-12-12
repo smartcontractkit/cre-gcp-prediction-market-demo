@@ -7,7 +7,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 /// @title SimpleMarket
 /// @notice A basic binary prediction market allowing users to stake ERC-20 tokens on Yes/No outcomes.
-/// @dev Integrates with Chainlink Runtime Environment (CRE) through IReceiverTemplate. Used in pair with demo workflow to settle markets with Gemini.
+/// @dev Integrates with Chainlink Runtime Environment (CRE) through ReceiverTemplate. Used in pair with demo workflow to settle markets with Gemini.
 contract SimpleMarket is ReceiverTemplate {
     using SafeERC20 for IERC20;
 
