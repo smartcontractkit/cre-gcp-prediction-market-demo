@@ -12,7 +12,7 @@ workflows:
   - dir: prediction-market-demo
     description: "Event-driven settlement workflow using Gemini AI and Firestore"
 postInit: |
-This template requires more steps to complete setup, refers to README.md for complete instructions
+  This template requires more steps to complete setup, refers to README.md for complete instructions
   1. Deploy SimpleMarket contract (see contracts/README.md)
   2. Set up Firebase/Firestore (see firebase-setup.md)
   3. Update cre-workflow/prediction-market-demo/config.json with your market address
